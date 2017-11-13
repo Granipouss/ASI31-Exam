@@ -7,6 +7,7 @@ from Crypto.Cipher import AES
 BLOCK_SIZE = 16
 KEY_SIZE = 256
 
+# = BLOCK BASIC OPERATIONS ===
 def toInt (s):
     return int(s.encode('hex'), 16)
 
@@ -19,6 +20,7 @@ def xor_block (A, B):
 def incr_block (A, n = 1):
     return int2hex_block(toInt(A) + n)
 
+# = BLOCKLIST OPERATIONS ===
 def blockify (msg):
     return [msg[i:i + BLOCK_SIZE] for i in range(0, len(msg), BLOCK_SIZE)]
 
@@ -40,6 +42,7 @@ def unpad (blocks):
         unpadded[-1] = blocks[-1][0:BLOCK_SIZE-l]
         return unpadded
 
+# = KEY GENERATION ===
 def gen_key (pwd, IV):
     kSize = KEY_SIZE / 8
     totalSize = BLOCK_SIZE + 2 * kSize
@@ -49,20 +52,22 @@ def gen_key (pwd, IV):
     R = key[2*kSize:totalSize]
     return (K1, K2, R)
 
+# = BLOCK CRYPTO OPERATIONS ===
 def encrypt_block (key, msg):
     return AES.new(key).encrypt(msg)
 
 def decrypt_block (key, msg):
     return AES.new(key).decrypt(msg)
 
-def gen_S (K1, K2, R, l):
-    return [encrypt_block(K2, incr_block(R, n+1)) for n in range(l)]
-
+# = IACBC CRYPTO OPERATIONS ===
 def xor_all (P):
     Q = P[0]
     for i in range(1, len(P)):
         Q = xor_block(Q, P[i])
     return Q
+
+def gen_S (K1, K2, R, l):
+    return [encrypt_block(K2, incr_block(R, n+1)) for n in range(l)]
 
 def encrypt_iacbc (K1, K2, R, msg):
     P = pad(blockify(msg))
@@ -100,6 +105,7 @@ def decrypt_iacbc (K1, K2, R, c):
     B = unpad(P[1:])
     return ''.join(B)
 
+# = MAIN OPERATIONS ===
 def encrypt (pwd, IV, msg):
     K1, K2, R = gen_key(pwd, IV)
     return encrypt_iacbc(K1, K2, R, msg)
