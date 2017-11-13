@@ -5,19 +5,19 @@ from Crypto.Cipher import AES
 
 # = CONSTANTES ===
 BLOCK_SIZE = 16
-KEY_SIZE = 32
+KEY_SIZE = 256
 
-def int2hex (n):
-    return '{:0>32}'.format(hex(n)[2:-1]).decode('hex')
+def toInt (s):
+    return int(s.encode('hex'), 16)
+
+def int2hex_block (n):
+    return (hex(n)[2:-1]).zfill(2 * BLOCK_SIZE).decode('hex')
 
 def xor_block (A, B):
-    a = int(A.encode('hex'), 16)
-    b = int(B.encode('hex'), 16)
-    return int2hex(a ^ b)
+    return int2hex_block(toInt(A) ^ toInt(B))
 
 def incr_block (A, n = 1):
-    a = int(A.encode('hex'), 16)
-    return int2hex(a + n)
+    return int2hex_block(toInt(A) + n)
 
 def blockify (msg):
     return [msg[i:i + BLOCK_SIZE] for i in range(0, len(msg), BLOCK_SIZE)]
@@ -32,19 +32,21 @@ def pad (blocks):
     return padded
 
 def unpad (blocks):
-    l = int(blocks[-1][-1].encode('hex'), 16)
+    l = int(blocks[-1][-1], 16)
     if l == 0:
         return blocks[:-1]
     else:
         unpadded = blocks[:]
-        unpadded[-1] = blocks[-1][0:16-l]
+        unpadded[-1] = blocks[-1][0:BLOCK_SIZE-l]
         return unpadded
 
 def gen_key (pwd, IV):
-    key = KDF.PBKDF2(pwd, salt=IV, dkLen=80, count=10000)
-    K1 = key[0:32]
-    K2 = key[32:64]
-    R = key[64:80]
+    kSize = KEY_SIZE / 8
+    totalSize = BLOCK_SIZE + 2 * kSize
+    key = KDF.PBKDF2(pwd, salt=IV, dkLen=totalSize, count=10000)
+    K1 = key[0*kSize:1*kSize]
+    K2 = key[1*kSize:2*kSize]
+    R = key[2*kSize:totalSize]
     return (K1, K2, R)
 
 def encrypt_block (key, msg):
