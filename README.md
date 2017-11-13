@@ -1,13 +1,13 @@
 # Examen de ASI331
 
-Encrypt a file:
+Chiffrer un fichier :
 ```bash
 python run.py -e -p PASSWORD -I SALT -i INPUT.txt -o CRYPTED.enc
 ```
 
-Decrypt a file:
+Déchiffrer un fichier :
 ```bash
 python run.py -d -p PASSWORD -I SALT -i CRYPTED.enc -o OUTPUT.txt
 ```
 
-No compilation needed
+Aucune compilation n'est nécéssaire.
